@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#10131c">
+<title>Neo Calculator</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:#10131c;color:#f5f7ff;font-family:-apple-system,sans-serif;display:grid;place-items:center;padding:20px}
+.app{width:min(100%,400px)}
+header{color:#aaa2ff;font-weight:bold;letter-spacing:3px;margin-bottom:30px}
+.display{height:180px;display:flex;flex-direction:column;justify-content:end;align-items:end;padding:15px;overflow:hidden}
+#expression{color:#9299ad;font-size:20px}
+#result{font-size:65px;word-break:break-all}
+.keys{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+button{height:72px;border:0;border-radius:20px;background:#191e2b;color:white;font-size:25px;font-weight:bold}
+button:active{filter:brightness(1.5)}
+.utility{background:#292f40;color:#c5c9dc}
+.operator{background:#302b50;color:#c6bcff}
+.equals{background:linear-gradient(135deg,#9b8cff,#6654ed)}
+.zero{grid-column:span 2}
+footer{text-align:center;color:#687287;font-size:12px;margin-top:22px}
+</style>
+</head>
+<body>
+<main class="app">
+<header>NEO / CALCULATOR</header>
+<section class="display">
+<div id="expression"></div>
+<div id="result">0</div>
+</section>
+<section class="keys" id="keys">
+<button class="utility" data-action="clear">AC</button>
+<button class="utility" data-action="sign">±</button>
+<button class="utility" data-action="percent">%</button>
+<button class="operator" data-value="÷">÷</button>
+<button data-value="7">7</button><button data-value="8">8</button><button data-value="9">9</button>
+<button class="operator" data-value="×">×</button>
+<button data-value="4">4</button><button data-value="5">5</button><button data-value="6">6</button>
+<button class="operator" data-value="−">−</button>
+<button data-value="1">1</button><button data-value="2">2</button><button data-value="3">3</button>
+<button class="operator" data-value="+">+</button>
+<button class="zero" data-value="0">0</button>
+<button data-value=".">.</button>
+<button class="equals" data-action="equals">=</button>
+</section>
+<footer>Made for everyday calculations</footer>
+</main>
+<script>
+let current='0',stored=null,op=null,replace=false,shown='';
+const result=document.querySelector('#result');
+const expression=document.querySelector('#expression');
+function render(){result.textContent=current;expression.textContent=shown}
+function fmt(n){return Number.isFinite(n)?String(Number(n.toPrecision(11))):'Error'}
+function input(v){
+ if(v==='.'&&current.includes('.')&&!replace)return;
+ if(replace){current=v==='.'?'0.':v;replace=false}
+ else if(current==='0'&&v!=='.')current=v;
+ else if(current.length<15)current+=v;
+ render();
+}
+function calculate(){
+ if(op===null||stored===null)return;
+ let a=stored,b=Number(current),n;
+ if(op==='+')n=a+b;
+ if(op==='−')n=a-b;
+ if(op==='×')n=a*b;
+ if(op==='÷')n=b===0?NaN:a/b;
+ current=fmt(n);shown=fmt(a)+' '+op+' '+fmt(b)+' =';
+ stored=null;op=null;replace=true;render();
+}
+function choose(o){
+ if(op&&!replace)calculate();
+ stored=Number(current);op=o;
+ shown=fmt(stored)+' '+o;replace=true;render();
+}
+function action(a){
+ if(a==='clear'){current='0';stored=null;op=null;shown='';replace=false}
+ if(a==='sign'&&current!=='0')current=fmt(-Number(current));
+ if(a==='percent')current=fmt(Number(current)/100);
+ if(a==='equals')calculate();
+ render();
+}
+document.querySelector('#keys').addEventListener('click',e=>{
+ const b=e.target.closest('button');if(!b)return;
+ if(b.dataset.value!==undefined){
+ const v=b.dataset.value;
+ if(['+','−','×','÷'].includes(v))choose(v);else input(v);
+ }else action(b.dataset.action);
+});
+document.addEventListener('keydown',e=>{
+ if(/^[0-9.]$/.test(e.key))input(e.key);
+ else if(['+','-','*','/'].includes(e.key))choose(({'+':'+','-':'−','*':'×','/':'÷'})[e.key]);
+ else if(e.key==='Enter'||e.key==='=')calculate();
+ else if(e.key==='Escape')action('clear');
+ else if(e.key==='Backspace'){current=current.length>1?current.slice(0,-1):'0';render()}
+});
+render();
+</script>
+</body>
+</html>
